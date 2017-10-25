@@ -1,0 +1,122 @@
+{% extends 'blog/blog_base.html' %}
+{% import '_paginator.html' as paginator_macro %}
+{% block custom_css %}
+    <!-- Vendors -->
+
+    <!-- Material design colors -->
+    <link href="{{ url_for('static',filename='blog/vendors/material-design-iconic-font/dist/css/material-design-iconic-font.min.css') }}"
+          rel="stylesheet" xmlns="http://www.w3.org/1999/html">
+
+    <!-- CSS animations -->
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'blog/vendors/animate.min.css')}}">
+
+    <!-- Select2 - Custom Selects -->
+    <link rel="stylesheet" href="{{ url_for('static',filename='blog/vendors/select2/dist/css/select2.min.css')}}">
+
+    <!-- rateYo - Ratings -->
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'blog/vendors/src/jquery.rateyo.css' )}}">
+
+    <!-- NoUiSlider - Input slider -->
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'blog/vendors/nouislider/distribute/nouislider.min.css')}}">
+
+    <!-- Site -->
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'blog/css/app_1.min.css' )}}">
+    <link rel="stylesheet" href="{{ url_for('static',filename='blog/css/app_2.min.css' )}}">
+
+    <!-- Page Loader JS -->
+    <script src="{{ url_for('static',filename= 'blog/js/page-loader.min.js')}}" async></script>
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'editormd/css/editormd.preview.css')}}"/>
+    <style>
+        .editormd-preview-container, .editormd-html-preview {
+            padding: 0;
+        }
+    </style>
+{% endblock %}
+{% block container %}
+    <section class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-sm-7">
+                    {% for article in articles %}
+                        <article class="card">
+                            <div class="card__header">
+                                <h2><a href="/article/{{ article.id }}" style="color: #2e353b">{{ article.title }}</a></h2>
+
+                                <small>
+                                    <span><span style="font-weight: bold">发布时间</span>：{{ moment(article.created_time).fromNow(refresh=True) }}</span>
+                                    <span><span style="font-weight: bold">浏览</span>（{{ article.read_num }}）</span>
+                                    <span><span style="font-weight: bold">评论</span>（{{ article.get_comment_num() }}）</span>
+                                    <span><span style="font-weight: bold">分类</span>：
+                                        {% for category in article.get_categories() %}
+                                            {{ category }} &nbsp;&nbsp;
+                                        {% endfor %}
+                                    </span>
+                                    <span><span style="font-weight: bold">标签</span>：
+                                        {% for tag in article.get_tags() %}
+                                            {{ tag }} &nbsp; &nbsp;
+                                        {% endfor %}
+                                    </span>
+                                </small>
+                            </div>
+                            <div class="card__body">
+                                <div id="test-editormd-view{{ article.id }}">
+                                    <h5>{{ article.description  }}</h5>
+                                </div>
+                                <div class="blog-more">
+                                    <a href="/article/{{ article.id  }}">阅读全文</a>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+
+                    {{ paginator_macro.paginator(pagination,'main.index',category=search_category,tag=search_tag,search=search_text) }}
+                </div>
+                {{ super() }}
+            </div>
+        </div>
+    </section>
+{% endblock %}
+{% block custom_js %}
+
+    <!-- Javascript -->
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static',filename='blog/vendors/jquery/dist/jquery.min.js')}}"></script>
+
+    <!-- Bootstrap -->
+    <script src="{{ url_for('static',filename= 'blog/vendors/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+
+    <!-- Waves button ripple effects -->
+    <script src="{{ url_for('static',filename='blog/vendors/Waves/dist/waves.min.js')}}"></script>
+
+    <!-- IE9 Placeholder -->
+    <!--[if IE 9 ]>
+    <script src="{{ url_for('static',filename='blog/vendors/jquery-placeholder/jquery.placeholder.min.js')}}"></script>
+    <![endif]-->
+
+    <script src="{{ url_for('static',filename= 'blog/js/demo/demo.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/marked.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/prettify.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/raphael.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/underscore.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/sequence-diagram.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/flowchart.min.js' )}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/lib/jquery.flowchart.min.js')}}"></script>
+    <script src="{{ url_for('static',filename='editormd/editormd.js')}}"></script>
+    <script type="text/javascript">
+{#        $(function () {#}
+{#            {% for article in articles.object_list %}#}
+{#                var testEditormdView{{ article.id }};#}
+{#                testEditormdView{{ article.id }} = editormd.markdownToHTML("test-editormd-view{{ article.id }}", {#}
+{#                    htmlDecode: "style,script,iframe",#}
+{#                    markdownSourceCode: true,#}
+{#                    emoji: true,#}
+{#                    taskList: true,#}
+{#                    tex: true,#}
+{#                    flowChart: true,#}
+{#                    sequenceDiagram: true#}
+{#                });#}
+{#            {% endfor %}#}
+{#        });#}
+    </script>
+{% endblock %}

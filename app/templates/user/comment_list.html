@@ -1,0 +1,147 @@
+{% extends 'user/base.html' %}
+{% block title %}落雪 | 我的评论{% endblock %}
+{% import '_paginator.html' as paginator_macro %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.css') }}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                我的评论
+                <small>我对文章的评论</small>
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="#"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a href="#">用户博客</a></li>
+                <li class="active">我的评论</li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box">
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <table id="comment_list" class="table table-bordered table-striped" style="text-align: center">
+
+                                <thead >
+                                <tr >
+                                    <th style="text-align: right"><span>全选&nbsp;&nbsp;<input type="checkbox"></span> </th>
+                                    <th style="text-align: center">评论的文章</th>
+                                    <th style="text-align: center">文章作者</th>
+                                    <th style="text-align: center">评论时间</th>
+                                    <th style="text-align: center">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for comment in comments %}
+                                    {% if  current_user.id ==user_info.id or current_user.is_admin() or article.status=='发布' %}
+                                        <tr id="comment_row{{ comment.id }}">
+                                            <td style="text-align: right"><input class="comment_cb" type="checkbox" value="{{ comment.id }}"></td>
+                                            <td>《<a href="{{ url_for('art.article',article_id=comment.article_id ) }}">{{ comment.article.title }}</a>》</td>
+                                            <td><a href="{{ url_for('user.profile',user_id=comment.receiver_id) }}">{{ comment.receiver.nick_name }}</a></td>
+                                            <td>{{ moment( comment.created_time).format('LLL')  }}</td>
+                                            <td>
+                                                {% if current_user.id == user_info.id or current_user.is_admin() %}
+                                                    <button onclick="edit_comment('{{ comment.id }}')" type="button" class="btn btn-success" style="font-size: 12px">编辑</button>
+                                                    <button onclick="del_comment('{{ comment.id }}')" type="button" class="btn btn-danger" style="font-size: 12px">删除</button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if current_user.is_admin() or current_user.id == user_info.id %}
+                                <br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-danger" style="line-height: 5px;" onclick="del_comments(event)"><span class="glyphicon glyphicon-trash"></span>批量删除</button>
+                            {% endif %}
+                            {{ paginator_macro.paginator(pagination,'user.comment_list',user_id=user_info.id) }}
+
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </section>
+        <!-- /.content -->
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <!-- DataTables -->
+    <script src="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.min.js') }}"></script>
+    <!-- page script -->
+    <script>
+        function del_comment(comment_id) {
+            $.ajax({
+                type: "POST",
+                url:'{{ url_for('user.delete') }}',
+                data: JSON.stringify({
+                    opt:'del_comment',
+                    comment_id:comment_id,
+                }),
+                success: function (r) {
+                    if(r.result) {
+                        el = document.getElementById('comment_row'+comment_id);
+                        el.parentNode.removeChild(el);
+                        alert('删除成功');
+                    }
+                    else
+                        alert('删除失败 ！')
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR, textStatus, errorThrown);
+                }
+            });
+        }
+        function del_comments(ev){
+            ev.stopPropagation()
+            comments_id_cb = document.getElementsByClassName('comment_cb');
+            comment_id_list = [];
+            for(var i= 0;i<comments_id_cb.length;i++)
+                if(comments_id_cb[i].checked)
+                    comment_id_list.push(comments_id_cb[i].value);
+            if(comments_id_cb.length>0)
+                 $.ajax({
+                    type: "POST",
+                    url:'{{ url_for('user.delete') }}',
+                    data: JSON.stringify({
+                        opt:'del_comments',
+                        comment_id_list:comment_id_list,
+                    }),
+                    success: function (r) {
+                        if(r.result) {
+                            for(var i =comments_id_cb.length-1 ;i>=0;i--) {
+                                if (comments_id_cb[i].checked) {
+                                    table_row = document.getElementById('comment_row'+comments_id_cb[i].value)
+                                    table_row.parentNode.removeChild(table_row);
+                                }
+                            }
+                            alert('删除成功');
+                        }
+                        else
+                            alert('删除失败 ！')
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert('服务器内部错误 ！');
+                    }
+                });
+            else
+                alert('你想删啥 ？')
+        }
+        function EditComment(URL) {
+            location.href = "{{ url_for('user.edit_article') }}" + '?article_id=' + article_id
+        }
+
+
+    </script>
+{% endblock %}

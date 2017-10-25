@@ -1,0 +1,116 @@
+{% extends 'user/base.html' %}
+{% block title %}落雪 | 添加文章{% endblock %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for( 'static',filename= 'plugins/select2/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for( 'static',filename= 'dist/css/AdminLTE.min.css' ) }}">
+    <link rel="stylesheet" href="{{ url_for( 'static',filename= 'bootstrap/css/bootstrap.min.css') }}">
+
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1>
+                添加文章
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="{{ url_for('user.index',user_id=user_info.id)}}"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a>文章管理</a></li>
+                <li class="active">添加文章</li>
+            </ol>
+        </section>
+        <section class="content">
+            <div class="row">
+                <form action="{{ url_for('user.add_article') }}" method="post">
+                    <div class="box">
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-1"></div>
+                                <div class="col-md-6">
+                                    <input class="form-control input-lg putup" type="text" id="title" name="title" placeholder="文章标题">
+                                </div>
+                                {% if current_user.is_admin() %}
+                                    <div class="col-md-2">
+                                        <select class="form-control" style="height: 46px;font-size: 18px;"id="author" name="author">
+                                            <option value="1">以该用户身份发布</option>
+                                            <option value="2">以管理员身份发布</option>
+                                        </select>
+                                    </div>
+                                {% endif %}
+                                <div class="col-xs-2">
+                                    <div class="form-group">
+                                        <select class="form-control" style="height: 46px;font-size: 18px;"id="status" name="status">
+                                            <option value="存稿">存稿</option>
+                                            <option value="发布">发布</option>
+                                            <option value="仅好友可见">仅好友可见</option>
+                                            <option value="亲密好友可见">亲密好友可见</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-1"></div>
+                                <div class="col-md-5">
+                                        <label class="label-default" style="font-size: 18px;border-radius: 10px;width: 60px;text-align: center;margin-right: 20px;background-color: lightgrey;float: left">分类:</label>
+                                        <div id="cats_div" style="float: left"></div>
+                                </div>
+                                <div class="col-md5">
+                                    <label class="label-default" style="font-size: 18px;border-radius: 10px;width: 60px;text-align: center;margin-left: 20px;background-color: lightgrey;float:left">标签:</label>
+                                    <div id="tags_div" style="float: left"></div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-1"></div>
+                                <div class="col-md-5">
+                                    <div class="form-group">
+
+                                        <select id="categories" onchange="changeCT()" class="form-control select2" multiple="multiple" data-placeholder="分类" style="width: 100%;height: 45px;font-size: 25px;" name="categories">
+                                            <option value="">----</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.name }}">{{ category.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="form-group">
+                                        <select id='tags' onchange="changeCT()" class="form-control select2" multiple="multiple" data-placeholder="标签" style="width: 100%;height: 45px;font-size: 25px;" name="tags">
+                                            <option value="">----</option>
+                                            {% for tag in tags %}
+                                                <option value="{{ tag.name }}">{{ tag.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-1"></div>
+                                <div class="col-md-10">
+                                    <textarea class="putup" id="content" ></textarea>
+                                </div>
+                                <div class="col-md-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="box-footer" style="background-color: #ecf0f5">
+                        <button type="button" id='save' onclick="submit_art({{ current_user.id }},'{{ url_for('user.article_list',user_id=user_info.id) }}')" class="btn btn-primary pull-right btn-lg">保存</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <script src="{{ url_for( 'static',filename= 'plugins/select2/select2.full.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='tinymce/js/tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='tinymce/js/tinymce/plugins/codesample/plugin.min.js') }}"></script>
+    <script src="{{ url_for('static',filename= 'js/custom.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/tinymce_setup.js') }}"></script>
+    <script>
+
+    </script>
+{% endblock %}

@@ -1,0 +1,347 @@
+{% extends 'blog/blog_base.html' %}
+{% import  '_paginator.html' as paginator_macro %}
+{% block title %}
+    <title>{{ article.title }}</title>
+    <meta name="keywords" content={{ article.get_tags() }}>
+    <meta name="description" content=落云飘雪，用博客记录成长!>
+{% endblock %}
+{% block custom_css %}
+
+    <!-- Material design colors -->
+    <link href="{{ url_for('static', filename =  'blog/vendors/material-design-iconic-font/dist/css/material-design-iconic-font.min.css')}}" rel="stylesheet">
+
+    <!-- CSS animations -->
+    <link rel="stylesheet" href="{{ url_for('static', filename =  'blog/vendors/animate.min.css')}}">
+
+    <!-- Site -->
+    <link rel="stylesheet" href="{{ url_for('static', filename =  'blog/css/app_1.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename =  'blog/css/app_2.min.css')}}">
+    <!-- Page Loader JS -->
+    <script src="{{ url_for('static', filename =  'blog/js/page-loader.min.js')}}" async></script>
+{#    me.css#}
+    <link rel="stylesheet" href="{{ url_for('static', filename =  'me.css/monkai.css')}}">
+    <style>
+        .editormd-preview-container, .editormd-html-preview {
+            padding: 0;
+        }
+        a:hover{
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+{% block container %}
+
+    <section class="section">
+        <div class="container ">
+                <div id="article">
+                    <article class="card blog ">
+                        <div class="card__header">
+                            <h1 style="font-size: 19px">{{ article.title }}</h1>
+
+                            <small>
+                                <span>发布时间：{{ moment(article.created_time).format('LLL') }}</span>
+                                <span>浏览（{{ article.read_num }}）</span>
+                                <span>评论（{{ article.get_comment_num() }}）</span>
+                                <span>分类：{% for c in article.get_categories() %}
+                                                <a href="{% if c != '无'  %}{{ url_for('main.index',category=c )}}{% else %}#{% endif %}">{{ c }} &nbsp;&nbsp;</a>
+                                            {% endfor %}
+                                </span>
+                            </small>
+                        </div>
+                        <div class="card__body" style="color: black">
+                                {{ article.content |safe}}
+                                <span style="color:dodgerblue;float:right;right:50px"><a class="poc"  style="color:dodgerblue;" onclick="send_poc('a','{{ article.id  }}','2',1)">贬&nbsp;&nbsp;</a><span id="a_critical">({{ article.critical_num }})</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                                <span style="color:dodgerblue;float:right"><a class="poc"   style="color:dodgerblue; " onclick="send_poc('a','{{ article.id  }}','1',1)">赞 &nbsp;&nbsp;</a><span id="a_poll">({{ article.poll_num }})</span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </div>
+
+                        <div class="blog__tags">
+                            <h3 style="display: inline">文章标签：</h3>
+                            {% for tag in article.get_tags() %}
+                                <label style="padding-top: 8px" class="label label-primary"><a style="font-size: 20px;color:white" href="{% if tag != '无' %}{{ url_for('main.index',tag=tag) }}{% else %}#{% endif %}">&nbsp;{{ tag }}&nbsp;</a></label>
+                            {% endfor %}
+                        </div>
+
+                        <div class="blog__arthur">
+                            <div class="blog__arthur-contents">
+                                <h2>作者：<a href="{{ url_for('user.profile',user_id=article.author_id) }}">{{ article.author.nick_name }}</a></h2>
+                                <p>本文章采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">知识共享署名-非商业性使用-相同方式共享4.0国际许可协议</a>进行许可。</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+
+
+            <!-- Comment Lists -->
+            <div class="card list-group blog-comment">
+                <div id="comment_header" class="list-group__header clearfix">
+                    <span class="pull-left">{{ article.get_comment_num() }} 条迄今为止的评论</span>
+                    <a href="#blog-comment" data-rmd-action="scroll-to" data-rmd-target="#blog-comment" data-rmd-offset="85" class="pull-right"><span class="hidden-xs">添加一个 </span>评论</a>
+                </div>
+
+                {% for comment in comments %}
+                    {% if comment %}
+                    <div id="comment{{ loop.index }}" class="list-group-item media">
+                        <a href="" class="pull-left">
+                            <img src="{{ MEDIA_URL }}{{ comment.author.profile_img }}" class="list-group__img img-circle" width="50" height="50" alt="">
+                        </a>
+                        <div class="media-body list-group__text">
+                            <a style="color: deepskyblue" href="{{ url_for('user.profile',user_id=comment.author_id) }}">{{ comment.author.nick_name }}</a>
+                            <small>评论时间：{{ comment.created_time }}</small>
+                            <p class="m-t-15"> <h4>{{ comment.content }}</h4></p>
+                            <span style="color:greenyellow;float:right;right:50px"><a  class="poc"  style="color:greenyellow;" onclick="send_poc('c','{{ comment.id  }}','2',{{ loop.index }})">贬&nbsp;&nbsp;</a><span id="c_critical{{ loop.index }}">({{ comment.critical_num }})</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span style="color:lawngreen;float:right"><a  class="poc"  style="color:lawngreen;" onclick="send_poc('c','{{ comment.id  }}','1',{{ loop.index }})">赞 &nbsp;&nbsp;</a><span id="c_poll{{ loop.index }}">({{ comment.poll_num }})</span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <div style="clear:both"></div>
+                            <hr style="border-color: #0000CD">
+
+
+                            <div class="form-group form-group--light form-group--float reply_cons card__body" style="background-color:#3949AB;display: none;"  id="reply_con{{ loop.index }}">
+                                <button class='btn 'type="button" style="color:white;background-color:red;height: 30px;width: 30px; border-radius: 15px;font-size: 12px;float:right" onclick="close_parent(this)">X</button>
+                                <form method="post" action="{{ url_for('art.reply') }}">
+                                    <input type="text" style="display: none" name="article_id"  value="{{ article.id  }}">
+                                    <input type="text" style="display: none" name="comment_id" value="{{ comment.id}}">
+                                    <input type="text" style="display: none" name="receiver_id" value="{{ comment.author.id }}">
+                                    <textarea class="textarea-autoheight form-control" name="ReplyBody" style="background-color:#3949AB;" placeholder="写一些你的回复吧~~" id="CommentBody{{ loop.index }}"></textarea>
+                                    <i class="form-group__bar"></i>
+                                    {% if current_user.is_authenticated == True %}
+                                        <div class="load-more" style="background-color: #3949AB">
+                                            <button id="ReplyComment" style="float:right;background-color: #fff;margin-top:-15px;" type="submit" class="btn btn-default btn-sm m-t-15">添加回复</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="load-more">
+                                            <a style="background-color: #fff;" href="#">登录后才可以回复哦~</a>
+                                        </div>
+                                    {% endif %}
+                                </form>
+                            </div>
+                            <div class="actions actions--blog-comment dropdown">
+                                <a href="" data-toggle="dropdown"><i class="zmdi zmdi-more-vert"></i></a>
+                                <ul class="dropdown-menu dropdown-menu--icon pull-right">
+                                    <li><a onclick="show_reply({{ loop.index }})" data-rmd-action="blog-comment-open" style="cursor:pointer;"><i class="zmdi zmdi-mail-reply"></i> 回复该评论</a></li>
+                                    {% if article.author_id == current_user.id or current_user.can_do(255)  %}
+                                        <li><a onclick="del_comment('{{ comment.id  }}','comment{{ loop.index }}')" data-rmd-action="blog-comment-open" style="cursor:pointer;"><i class="zmdi zmdi-mail-reply"></i>删除该评论</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+
+
+                            <!-- 所有回复 -->
+                            {% for reply in comment.replys %}
+                                <div class="list-group-item media" id="reply{{ comment.id }}{{ loop.index }}">
+                                    <div href="" class="pull-left">
+                                        <img src="{{ reply.author.profile_img }}" class="list-group__img img-circle" width="35" height="35" alt="">
+                                    </div>
+                                    <div class="media-body list-group__text">
+                                        <strong>
+                                            <small class="text-muted" ><a style="color: orange" href="{{ url_for('user.profile',user_id=reply.author_id) }}">{{ reply.author.nick_name }}</a></small>
+                                            <small style="color:grey">@</small>
+                                            <small class="text-muted" ><a style="color: lightgreen" href="{{ url_for('user.profile',user_id=reply.receiver_id) }}">{{ reply.receiver.nick_name }}</a></small>
+                                        </strong>
+                                        <small>回复时间：{{ moment(reply.created_time).format('LLL') }}</small>
+                                        <p class="m-t-15">
+                                            <h4>{{ reply.content }}</h4>
+                                        </p>
+                                    </div>
+                                    <div class="actions actions--blog-comment dropdown">
+                                        <a href="" data-toggle="dropdown"><i class="zmdi zmdi-more-vert"></i></a>
+                                        <ul class="dropdown-menu dropdown-menu--icon pull-right">
+                                            <li><a onclick="show_reply2('reply_con{{ comment.id }}{{ loop.index }}')" data-rmd-action="blog-comment-open" style="cursor:pointer;"><i class="zmdi zmdi-mail-reply"></i> 回复 &nbsp;<b style="color:orange">{{ reply.author.nick_name }}</b></a></li>
+                                            {% if article.author_id == current_user.id or current_user.can_do(255) %}
+                                                <li><a onclick="del_reply('{{ reply.id  }}','reply{{ comment.id }}{{ loop.index }}')" data-rmd-action="blog-comment-open" style="cursor:pointer;"><i class="zmdi zmdi-mail-reply"></i>删除该回复</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+{#                                    对某人进行回复#}
+                                    <div class="form-group form-group--light form-group--float reply_cons card__body" style="background-color:#3949AB;display: none;"  id="reply_con{{ comment.id }}{{ loop.index }}">
+                                        <button class='btn 'style="color:white;background-color:red;height: 30px;width: 30px; border-radius: 15px;font-size: 12px;float:right" onclick="close_parent(this)">X</button>
+                                        <form method="post" action="{{ url_for('art.reply') }}">
+                                            <input type="text" style="display: none" name="article_id"  value="{{ article.id  }}">
+                                            <input type="text" style="display: none" name="comment_id" value="{{ comment.id}}">
+                                            <input type="text" style="display: none" name="receiver_id" value="{{ reply.author.id}}">
+                                            <textarea class="textarea-autoheight form-control" name="ReplyBody" style="background-color:#3949AB;" placeholder="写一些你想对 '{{ reply.author.nick_name }}' 说的话吧~~" id="CommentBody{{ loop.index }}"></textarea>
+                                            <i class="form-group__bar"></i>
+                                            {% if current_user.is_authenticated == True %}
+                                                <div class="load-more" style="background-color: #3949AB">
+                                                    <button id="ReplyComment" style="float:right;background-color: #fff;margin-top:-15px;" type="submit" class="btn btn-default btn-sm m-t-15">添加回复</button>
+                                                </div>
+                                            {% else %}
+                                                <div class="load-more">
+                                                    <a style="background-color: #fff;" href="#">登录后才可以回复哦~</a>
+                                                </div>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                    {% if loop.last %}
+                                        <hr style="border-color: #0000CD">
+                                    {% else %}
+                                        <hr style="border-color:deepskyblue;border-style: dashed;">
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                                <!-- End sub comment list -->
+
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {{ paginator_macro.paginator(pagination,'art.article',article.id) }}
+
+            <!-- Post a comment -->
+            <div id="blog-comment" class="card card--dark" style="background-color: #3949AB">
+                <div class="card__header">
+                    <h2 id="ReplyCommentTips">发表你的评论</h2>
+                    <small>在这里你可以畅所欲言~</small>
+                </div>
+                <div class="card__body">
+                    <form method="post" action="{{ url_for('art.comment') }}">
+                        <input type="text" style="display: none" name="article_id"  value="{{ article.id  }}">
+                        <div class="form-group form-group--light form-group--float">
+                            <textarea class="textarea-autoheight form-control" placeholder="写一些你要评论或回复的内容吧..." id="CommentBody" name="CommentBody"></textarea>
+                            <i class="form-group__bar"></i>
+                        </div>
+                        {% if current_user.is_authenticated == True %}
+                            <button id="ReplyComment" type="submit" class="btn btn-default btn-sm m-t-15">添加评论</button>
+                        {% else %}
+                            <div class="load-more">
+                                <a style="background-color: #fff;" href="#">登录后才可以评论哦~</a>
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </section>
+{% endblock %}
+{% block custom_js %}
+
+    <!-- jQuery -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/jquery/dist/jquery.min.js')}}"></script>
+
+    <!-- Bootstrap -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+
+    <!-- Waves button ripple effects -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/Waves/dist/waves.min.js' )}}"></script>
+
+    <!-- Autosize - Auto height textarea -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/autosize/dist/autosize.min.js')}}"></script>
+
+    <!-- rateYo - Ratings -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/src/jquery.rateyo.js')}}"></script>
+
+    <!-- jsSocials - Social link sharing -->
+    <script src="{{ url_for('static', filename =  'blog/vendors/jssocials/dist/jssocials.min.js')}}"></script>
+    <script src="{{ url_for('static', filename =  'blog/js/me.js')}}"></script>
+    <!-- IE9 Placeholder -->
+    <!--[if IE 9 ]>
+    <script src="{{ url_for('static', filename =  'blog/vendors/jquery-placeholder/jquery.placeholder.min.js')}}"></script>
+
+    <![endif]-->
+
+    <script type="text/javascript">
+
+        function show_reply(ID) {
+            var re_id = 'reply_con' + ID;
+            var re_con = document.getElementById(re_id);
+            var cons_count = {{ comments | length }}
+            for (var i = 1; i <= cons_count; i++) {
+                var other_id = 'reply_con' + i
+                document.getElementById(other_id).style.display = 'none'
+            }
+            re_con.style.display = 'block';
+        }
+
+        function show_reply2(reply_el_id) {
+            var re_con = document.getElementById(reply_el_id);
+            var cons_count = {{ comments | length }}
+            for (var i = 1; i <= cons_count; i++) {
+                var other_id = 'reply_con' + i
+                document.getElementById(other_id).style.display = 'none'
+            }
+            re_con.style.display = 'block';
+        }
+        function close_parent(el){
+            el.parentNode.style.display='none'
+        }
+        function send_poc(obj,id,poc,obj_id){
+            var o;
+            if(obj=='a'){
+                o='article'
+            }else if(obj=='c'){
+                o='comment'
+            }else if(obj=='r'){
+                o='reply'
+            }
+            $.ajax({
+                type:'POST',
+                url:'{{ url_for('art.put_poc') }}',
+                data:JSON.stringify({
+                    opt:'put_poc',
+                    obj:o,
+                    obj_id:id,
+                    poc:poc,}),
+                success:(function(r){
+                    if(r.result == true){
+                        if(obj=='a'){
+                            $('#a_poll').text('(' + r.poll_num +')')
+                            $('#a_critical').text('(' + r.critical_num +')')
+                        }else if(obj=='c'){
+                            var p_id='#c_poll'+obj_id
+                            var c_id='#c_critical'+obj_id
+                            $(p_id).text('(' + r.poll_num +')')
+                            $(c_id).text('(' + r.critical_num +')')
+                        }
+
+                    }
+
+                })
+            })
+        }
+        function del_comment(comment_id,comment_el_id){
+            $.ajax({
+                    type: 'POST',
+                    url:"{{ url_for('user.delete') }}",
+                    data: JSON.stringify({
+                        opt:'del_comment',
+                        comment_id:comment_id,
+                    }),
+                    success:(function(r){
+                            if(r.result){
+                                var el = document.getElementById(comment_el_id);
+                                el.parentNode.removeChild(el);
+                                alert('已删除该评论');
+                            }else{
+                                alert('删除失败。');
+                            }
+                    }),
+                    err:(function(){alert('请求失败！')})
+            })
+        }
+
+        function del_reply(reply_id,reply_el_id){
+            $.ajax({
+                    type: 'POST',
+                    url:"{{ url_for('user.delete') }}",
+                    data: JSON.stringify({
+                        opt:'del_reply',
+                        reply_id:reply_id,
+                    }),
+                    success:(function(r){
+                            if(r.result){
+                                var el = document.getElementById(reply_el_id);
+                                el.parentNode.removeChild(el);
+                                alert('已删除该回复');
+                            }else{
+                                alert('删除失败。');
+                            }
+                    }),
+                    err:(function(){alert('请求失败！')})
+            })
+        }
+
+
+    </script>
+{% endblock %}

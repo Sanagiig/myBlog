@@ -1,0 +1,37 @@
+{% macro paginator(pagination,endpoint,article_id='',category='',tag='',search='',fragment='',user_id='') %}
+<nav class="text-center">
+    <ul class="pagination">
+        {# 是否有上一页 #}
+        {% if pagination.has_prev %}
+            <li>
+                <a href="{{ url_for(endpoint,article_id=article_id,category=category,tag=tag,search=search,page=pagination.prev_num,user_id=user_id) }}" aria-label="Previous">
+                    <i>&laquo;</i>
+                </a>
+            </li>
+        {% endif %}
+        {% for page in pagination.iter_pages() %}
+            {% if page %}
+                {% if page == pagination.page %}
+                    {# 当前页 #}
+                    <li class="active"><a>{{ page }}</a></li>
+                {% else %}
+                    {# 下一页 #}
+                    <li><a href="{{url_for(endpoint,article_id=article_id,category=category,tag=tag,search=search,page=page,user_id=user_id) }}">{{ page }}</a></li>
+                {% endif %}
+            {% else %}
+                {# 页数过多显示什么 #}
+                <li class="none"><a href="">...</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {# 是否有下一页 #}
+        {% if pagination.has_next %}
+            <li>
+                <a href="{{ url_for(endpoint,article_id=article_id,category=category,tag=tag,search=search,page=pagination.next_num,user_id=user_id) }}" aria-label="Next">
+                    <i>&raquo;</i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endmacro %}

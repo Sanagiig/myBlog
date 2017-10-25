@@ -1,0 +1,205 @@
+{% extends 'user/base.html' %}
+{% block title %}飘云落雪 | 标签管理{% endblock %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='plugins/datatables/dataTables.bootstrap.css')}}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1>
+                分类管理
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="{{ url_for('user.index',user_id=user_info.id) }}"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a>标签/分类</a></li>
+                <li class="active">分类管理</li>
+            </ol>
+        </section>
+        <section class="content">
+            <div class="row">
+                <section class="content">
+                    <div class="row">
+
+                        <div class="col-xs-12">
+                            <div class="box">
+                                <div class="box-body">
+                                    <table id="tag_list" class="table table-bordered table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>分类</th>
+                                            <th>创建时间</th>
+                                            <th>分类文章数</th>
+                                            <th>操作</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        {% for tag in tags %}
+                                            <tr id="tags{{ tag.id }}"  onblur="ShowElements('{{ tag.id }}')">
+                                                <td>{{ tag.id }}</td>
+                                                <td>
+                                                    <span id="tag_dl{{ tag.id }}" onclick="HideElements('{{ tag.id }}')">
+                                                        <label id="tag_l{{ tag.id }}" class="label-primary" style="font-size: 18px;border-radius: 10px;width: 90px;text-align: center;">{{ tag.name }}</label>
+                                                    </span>
+
+                                                    <div style="display: none" id="tag_d{{ tag.id }}" class=" input-group input-group-sm">
+                                                        <input type="text" value="{{ tag.name }}" id="tag_t{{ tag.id }}"  >
+                                                    </div>
+
+                                                </td>
+                                                <td>{{ tag.created_time }}</td>
+                                                <td>{{ tag.article.count() }}</td>
+                                                <td>
+                                                    <button id="tag_edit_btn{{ tag.id }}" type="button" class="btn btn-success" style="font-size: 12px;float:left;"
+                                                            onclick="HideElements('{{ tag.id }}')">编辑
+                                                    </button>
+                                                    <button id="tag_del_btn{{ tag.id }}" type="button" class="btn btn-danger" style="font-size: 12px;float:left;margin-left:5px;"
+                                                            onclick="Deletetags('{{ tag.id }}')">删除
+                                                    </button>
+                                                    <div style="display: none" id="opt{{ tag.id }}">
+                                                        <button type="button" class="btn btn-primary" style="font-size: 12px"
+                                                                onclick="SaveElements('{{ tag.id }}')">保存
+                                                        </button>
+                                                        <button type="button" class="btn btn-default" style="font-size: 12px;margin-left:5px;"
+                                                                onclick="ShowElements('{{ tag.id }}')">取消
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <div class="box box-warning">
+                                <div class="box-header with-border">
+                                    <h4 class="box-title">添加分类</h4>
+                                </div>
+                                <div class="box-body">
+                                    <form action="" method="post">
+                                        <div class="form-group">
+                                            <textarea id="sub_text" class="form-control" rows="3" placeholder="添加多个分类，以逗号(,)分隔开" name="tags"></textarea>
+                                        </div>
+                                        <button onclick="Addtags()" type="button" class="btn btn-primary">添加</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <script src="{{ url_for('static',filename='plugins/datatables/jquery.dataTables.min.js')}}"></script>
+    <script src="{{ url_for('static',filename='plugins/datatables/dataTables.bootstrap.min.js')}}"></script>
+    <script>
+        $(function () {
+            $("#articleList").DataTable();
+        });
+        function Deletetags(ID) {
+            $.ajax({
+                type: "POST",
+                url:'{{ url_for("user.delete") }}',
+                data: JSON.stringify({
+                    opt: 'del_tag',
+                    tag_id:ID,
+                }),
+                success: function (d) {
+                    if(d.result) {
+                        el = document.getElementById('tags' + ID)
+                        el.parentNode.removeChild(el)
+                    }else
+                        alert('发生未知错误')
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            });
+        }
+        function HideElements(ID) {
+            $('#tag_dl' + ID).css(
+                "display", "none"
+            );
+            $('#tag_edit_btn'+ID).css(
+                "display", "none"
+            );
+            $('#tag_del_btn' + ID).css(
+                "display", "none"
+            );
+            $('#tag_d' + ID).css(
+                "display", "block"
+            );
+            $('#opt' + ID).css(
+                "display", "block"
+            );
+        }
+        function ShowElements(ID) {
+            $('#tag_d' + ID).css(
+                "display", "none"
+            );
+            $('#opt' + ID).css(
+                "display", "none"
+            );
+            $('#tag_dl' + ID).css(
+                "display", "block"
+            );
+            $('#tag_edit_btn'+ID).css(
+                "display", "block"
+            );
+            $('#tag_del_btn' + ID).css(
+                "display", "block"
+            );
+        }
+
+        function SaveElements(ID) {
+            var cat_name = $('#tag_t' + ID).val();
+            $.ajax({
+                type: "POST",
+                url:"{{ url_for('user.edit_tags') }}",
+                data: JSON.stringify({
+                    opt:'edit',
+                    tag_id: ID,
+                    tag_name: cat_name,
+                }),
+                success: function (r) {
+                    if(r.result){
+                        var label = document.getElementById('tag_l'+ID);
+                        label.innerText = document.getElementById('tag_t'+ID).value;
+                        ShowElements(ID)
+                    }else
+                        alert('保存失败啦~~')
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            });
+        }
+
+        function Addtags(){
+            text = document.getElementById('sub_text');
+            pre_data = text.value.replace(';',',').replace('/',',').replace('\\',',').replace(':',',');
+            tag_list = pre_data.split(',');
+            $.ajax({
+                type:'POST',
+                url:"{{ url_for('user.add_tags') }}",
+                data:JSON.stringify({
+                    tag_list:tag_list,
+                }),
+                success:function(r){
+                    if(r.result) {
+                        window.location.reload()
+                    } else {
+                        alert('发生未知错误')
+                    }
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            })
+
+
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'user/base.html' %}
+{% block title %}落雪 | 文章列表{% endblock %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.css') }}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                文章列表
+                <small>包含已发布和未发布的文章</small>
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="#"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a href="#">文章管理</a></li>
+                <li class="active">文章列表</li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box">
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <table id="articleList" class="table table-bordered table-striped">
+
+                                <thead >
+                                <tr>
+                                    <th>文章标题</th>
+                                    <th>创建时间</th>
+                                    <th>编辑时间</th>
+                                    <th>阅读数</th>
+                                    <th>评论数</th>
+                                    <th>状态</th>
+                                    <th>操作
+                                        {% if current_user.is_admin() or current_user.id == user_info.id %}
+                                            &nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-danger" style="line-height: 5px;" onclick="del_articles(event)"><span class="glyphicon glyphicon-trash"></span>批量删除</button>
+                                        {% endif %}
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for article in articles %}
+                                    {% if  current_user.id ==user_info.id or current_user.is_admin() or article.status=='发布' %}
+                                        <tr id="article_row{{ article.id }}">
+                                            <td><input class="article_cb" type="checkbox" value="{{ article.id }}">&nbsp;&nbsp;<a href="{{ url_for('art.article',article_id=article.id) }}">{{ article.title }}</a></td>
+                                            <td>{{ moment(article.created_time).format('LLL') }}</td>
+                                            <td>{{ moment(article.release_time).format('LLL') }}</td>
+                                            <td>{{ article.read_num }}</td>
+                                            <td>{{ article.comments.count() }}</td>
+                                            <td>
+                                                    <button type="button" class="btn btn-primary" style="font-size: 12px">{{ article.status }}</button>
+                                            </td>
+                                            <td>
+                                                {% if current_user.id == user_info.id or current_user.is_admin() %}
+                                                    <button onclick="edit_article('/user/edit_article/?article_id='+ {{ article.id }} +'&user_id='+{{ user_info.id }})" type="button" class="btn btn-success" style="font-size: 12px">编辑</button>
+                                                    <button onclick="del_article('{{ article.id }}','{{ url_for('user.delete') }}')" type="button" class="btn btn-danger" style="font-size: 12px">删除</button>
+                                                {% endif %}
+                                                <a href="{{ url_for('art.article',article_id=article.id) }}"><button type="button" class="btn btn-default" style="font-size: 12px">访问</button></a>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </section>
+        <!-- /.content -->
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <!-- DataTables -->
+    <script src="{{ url_for('static',filename= 'plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static',filename= 'js/custom.js') }}"></script>
+    <!-- page script -->
+    <script>
+        $(function () {
+            $("#articleList").DataTable();
+        });
+
+
+
+    </script>
+{% endblock %}

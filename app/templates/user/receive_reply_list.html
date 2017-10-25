@@ -1,0 +1,168 @@
+{% extends 'user/base.html' %}
+{% block title %}落雪 | 回复消息{% endblock %}
+{% import '_paginator.html' as paginator_macro %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.css') }}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+            <h1>
+                回复消息
+                <small>他人对我的回复</small>
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="#"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a href="#">用户博客</a></li>
+                <li class="active">回复消息</li>
+            </ol>
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box">
+                        <!-- /.box-header -->
+                        <div class="box-body">
+                            <table id="reply_list" class="table table-bordered table-striped" style="text-align: center">
+
+                                <thead >
+                                <tr >
+                                    <th style="text-align: right"><span>全选&nbsp;&nbsp;<input type="checkbox"></span> </th>
+                                    <th style="text-align: center">文章</th>
+                                    <th style="text-align: center">回复人人</th>
+                                    <th style="text-align: center">回复时间</th>
+                                    <th style="text-align: center">状态</th>
+                                    <th style="text-align: center">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for reply in replys %}
+                                    {% if  current_user.id ==user_info.id or current_user.is_admin() or article.status=='发布' %}
+                                        <tr id="reply_row{{ reply.id }}">
+                                            <td style="text-align: right;line-height: 30px;"><input class="reply_cb" type="checkbox" value="{{ reply.id }}"></td>
+                                            <td style="line-height: 30px;">在《<a href="{{ url_for('art.article',article_id=reply.comment.article.id ) }}">{{ reply.comment.article.title }}</a>》的回复</td>
+                                            <td style="line-height: 30px;"><a href="{{ url_for('user.profile',user_id=reply.author_id) }}">{{ reply.author.nick_name }}</a></td>
+                                            <td style="line-height: 30px;">{{ moment( reply.created_time).format('LLL')  }}</td>
+                                            <td style="line-height: 30px;">
+                                                {% if reply.is_read %}<label id="status{{ reply.id }}" class="label label-success" style="font-size: 15px;">已读</label>
+                                                {% else %}<label id="status{{ reply.id }}" class="label label-default"style="font-size: 15px;">未读</label>{% endif %}
+                                            </td>
+                                            <td style="line-height: 30px;">
+                                                {% if current_user.id == user_info.id or current_user.is_admin() %}
+                                                    <button onclick="preview_reply('{{ reply.id }}')" type="button" class="btn btn-success" style="font-size: 12px">预览</button>
+                                                    <button onclick="del_reply('{{ reply.id }}')" type="button" class="btn btn-danger" style="font-size: 12px">删除</button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if current_user.is_admin() or current_user.id == user_info.id %}
+                                <br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;<button class="btn btn-danger" style="line-height: 5px;" onclick="del_replys(event)"><span class="glyphicon glyphicon-trash"></span>批量删除</button>
+                            {% endif %}
+                            {{ paginator_macro.paginator(pagination,'user.receive_reply_list',user_id=user_info.id) }}
+
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                    <!-- /.box -->
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+        </section>
+        <!-- /.content -->
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <!-- DataTables -->
+    <script src="{{ url_for('static',filename= 'plugins/datatables/dataTables.bootstrap.min.js') }}"></script>
+    <!-- page script -->
+    <script>
+        function del_reply(reply_id) {
+            $.ajax({
+                type: "POST",
+                url:'{{ url_for('user.delete') }}',
+                data: JSON.stringify({
+                    opt:'del_reply',
+                    reply_id:reply_id,
+                }),
+                success: function (r) {
+                    if(r.result) {
+                        el = document.getElementById('reply_row'+reply_id);
+                        el.parentNode.removeChild(el);
+                        alert('删除成功');
+                    }
+                    else
+                        alert('删除失败 ！')
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR, textStatus, errorThrown);
+                }
+            });
+        }
+        function del_replys(ev){
+            ev.stopPropagation()
+            replys_id_cb = document.getElementsByClassName('reply_cb');
+            reply_id_list = [];
+            for(var i= 0;i<replys_id_cb.length;i++)
+                if(replys_id_cb[i].checked)
+                    reply_id_list.push(replys_id_cb[i].value);
+            if(replys_id_cb.length>0)
+                 $.ajax({
+                    type: "POST",
+                    url:'{{ url_for('user.delete') }}',
+                    data: JSON.stringify({
+                        opt:'del_replys',
+                        reply_id_list:reply_id_list,
+                    }),
+                    success: function (r) {
+                        if(r.result) {
+                            for(var i =replys_id_cb.length-1 ;i>=0;i--) {
+                                if (replys_id_cb[i].checked) {
+                                    table_row = document.getElementById('reply_row'+replys_id_cb[i].value)
+                                    table_row.parentNode.removeChild(table_row);
+                                }
+                            }
+                            alert('删除成功');
+                        }
+                        else
+                            alert('删除失败 ！')
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert('服务器内部错误 ！');
+                    }
+                });
+            else
+                alert('你想删啥 ？')
+        }
+        function preview_reply(reply_id) {
+             $.ajax({
+                    type: "POST",
+                    url:'{{ url_for('user.preview') }}',
+                    data: JSON.stringify({
+                        opt:'preview_reply',
+                        user_id:{{ user_info.id }},
+                        reply_id:reply_id,
+                    }),
+                    success: function (r) {
+                        if(r.result) {
+                            alert(r.content);
+                            s_label = document.getElementById('status'+reply_id);
+                            s_label.className = 'label label-success';
+                            s_label.innerText = '已读'
+                        }
+                        else
+                            alert('获取信息失败 ！')
+                    },
+                    error:function(){alert('服务器内部错误 ！')}
+        })}
+    </script>
+{% endblock %}

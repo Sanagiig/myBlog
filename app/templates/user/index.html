@@ -1,0 +1,35 @@
+{% extends 'user/base.html' %}
+{% block title %}Sanagi | 落云飘雪{% endblock %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'plugins/select2/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'dist/css/AdminLTE.min.css')}}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1>
+                我的空间
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="{{ url_for('user.index') }}"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a>文章管理</a></li>
+                <li class="active">添加文章</li>
+            </ol>
+        </section>
+        <section class="content">
+            <div class="row" >
+                <form action="{{ url_for('user.index') }}" method="post">
+                    <div class="box">
+                        <div class="box-body" style="background-color: #ECF0F5"></div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <script src="{{ url_for('static',filename= 'plugins/select2/select2.full.min.js')}}"></script>
+    <script src="{{ url_for('static',filename= 'editormd/editormd.js' )}}"></script>
+{% endblock %}

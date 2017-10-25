@@ -1,0 +1,205 @@
+{% extends 'user/base.html' %}
+{% block title %}飘云落雪 | 分类管理{% endblock %}
+{% block custom_css %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='plugins/datatables/dataTables.bootstrap.css')}}">
+{% endblock %}
+
+{% block content_wrapper %}
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1>
+                分类管理
+            </h1>
+            <ol class="breadcrumb">
+                <li><a href="{{ url_for('user.index',user_id=user_info.id) }}"><i class="fa fa-dashboard"></i> 首页</a></li>
+                <li><a>标签/分类</a></li>
+                <li class="active">分类管理</li>
+            </ol>
+        </section>
+        <section class="content">
+            <div class="row">
+                <section class="content">
+                    <div class="row">
+
+                        <div class="col-xs-12">
+                            <div class="box">
+                                <div class="box-body">
+                                    <table id="category_list" class="table table-bordered table-striped">
+                                        <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>分类</th>
+                                            <th>创建时间</th>
+                                            <th>分类文章数</th>
+                                            <th>操作</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        {% for category in categories %}
+                                            <tr id="category{{ category.id }}"  onblur="ShowElements('{{ category.id }}')">
+                                                <td>{{ category.id }}</td>
+                                                <td>
+                                                    <span id="category_dl{{ category.id }}" onclick="HideElements('{{ category.id }}')">
+                                                        <label id="category_l{{ category.id }}" class="label-primary" style="font-size: 18px;border-radius: 10px;width: 90px;text-align: center;">{{ category.name }}</label>
+                                                    </span>
+
+                                                    <div style="display: none" id="category_d{{ category.id }}" class=" input-group input-group-sm">
+                                                        <input type="text" value="{{ category.name }}" id="category_t{{ category.id }}"  >
+                                                    </div>
+
+                                                </td>
+                                                <td>{{ category.created_time }}</td>
+                                                <td>{{ category.article.count() }}</td>
+                                                <td>
+                                                    <button id="category_edit_btn{{ category.id }}" type="button" class="btn btn-success" style="font-size: 12px;float:left;"
+                                                            onclick="HideElements('{{ category.id }}')">编辑
+                                                    </button>
+                                                    <button id="category_del_btn{{ category.id }}" type="button" class="btn btn-danger" style="font-size: 12px;float:left;margin-left:5px;"
+                                                            onclick="Deletecategories('{{ category.id }}')">删除
+                                                    </button>
+                                                    <div style="display: none" id="opt{{ category.id }}">
+                                                        <button type="button" class="btn btn-primary" style="font-size: 12px"
+                                                                onclick="SaveElements('{{ category.id }}')">保存
+                                                        </button>
+                                                        <button type="button" class="btn btn-default" style="font-size: 12px;margin-left:5px;"
+                                                                onclick="ShowElements('{{ category.id }}')">取消
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-12">
+                            <div class="box box-warning">
+                                <div class="box-header with-border">
+                                    <h4 class="box-title">添加分类</h4>
+                                </div>
+                                <div class="box-body">
+                                    <form action="" method="post">
+                                        <div class="form-group">
+                                            <textarea id="sub_text" class="form-control" rows="3" placeholder="添加多个分类，以逗号(,)分隔开" name="categories"></textarea>
+                                        </div>
+                                        <button onclick="AddCategories()" type="button" class="btn btn-primary">添加</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </div>
+{% endblock %}
+
+{% block custom_js %}
+    <script src="{{ url_for('static',filename='plugins/datatables/jquery.dataTables.min.js')}}"></script>
+    <script src="{{ url_for('static',filename='plugins/datatables/dataTables.bootstrap.min.js')}}"></script>
+    <script>
+        $(function () {
+            $("#articleList").DataTable();
+        });
+        function Deletecategories(ID) {
+            $.ajax({
+                type: "POST",
+                url:'{{ url_for("user.delete") }}',
+                data: JSON.stringify({
+                    opt: 'del_category',
+                    category_id:ID,
+                }),
+                success: function (d) {
+                    if(d.result) {
+                        el = document.getElementById('category' + ID)
+                        el.parentNode.removeChild(el)
+                    }else
+                        alert('发生未知错误')
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            });
+        }
+        function HideElements(ID) {
+            $('#category_dl' + ID).css(
+                "display", "none"
+            );
+            $('#category_edit_btn'+ID).css(
+                "display", "none"
+            );
+            $('#category_del_btn' + ID).css(
+                "display", "none"
+            );
+            $('#category_d' + ID).css(
+                "display", "block"
+            );
+            $('#opt' + ID).css(
+                "display", "block"
+            );
+        }
+        function ShowElements(ID) {
+            $('#category_d' + ID).css(
+                "display", "none"
+            );
+            $('#opt' + ID).css(
+                "display", "none"
+            );
+            $('#category_dl' + ID).css(
+                "display", "block"
+            );
+            $('#category_edit_btn'+ID).css(
+                "display", "block"
+            );
+            $('#category_del_btn' + ID).css(
+                "display", "block"
+            );
+        }
+
+        function SaveElements(ID) {
+            var cat_name = $('#category_t' + ID).val();
+            $.ajax({
+                type: "POST",
+                url:"{{ url_for('user.edit_categories') }}",
+                data: JSON.stringify({
+                    opt:'edit',
+                    category_id: ID,
+                    category_name: cat_name,
+                }),
+                success: function (r) {
+                    if(r.result){
+                        var label = document.getElementById('category_l'+ID);
+                        label.innerText = document.getElementById('category_t'+ID).value;
+                        ShowElements(ID)
+                    }else
+                        alert('保存失败啦~~')
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            });
+        }
+
+        function AddCategories(){
+            text = document.getElementById('sub_text');
+            pre_data = text.value.replace(';',',').replace('/',',').replace('\\',',').replace(':',',');
+            category_list = pre_data.split(',');
+            $.ajax({
+                type:'POST',
+                url:"{{ url_for('user.add_categories') }}",
+                data:JSON.stringify({
+                    category_list:category_list,
+                }),
+                success:function(r){
+                    if(r.result) {
+                        window.location.reload()
+                    } else {
+                        alert('发生未知错误')
+                    }
+                },
+                error:function(){alert('服务器内部错误 ！')}
+            })
+
+
+        }
+    </script>
+{% endblock %}

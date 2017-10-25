@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--[if IE 9 ]><html class="ie9" lang="en"><![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block title %}
+{#        <title>{{ setting.title }}</title>#}
+{#        <meta name="keywords" content='{{ setting.keywords }}'>#}
+{#        <meta name="description" content='{{ setting.description }}'>#}
+    {% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static',filename= 'bootstrap/css/bootstrap.min.css' )}}  ">
+    {% block custom_css %}{% endblock %}
+</head>
+
+<body>
+<!-- Start page loader -->
+<div id="page-loader">
+    <div class="page-loader__spinner"></div>
+</div>
+<!-- End page loader -->
+
+<header id="header">
+    <div class="header__top">
+        <div class="container">
+            <ul class="top-nav">
+                {% if current_user.is_authenticated == True %}
+                    <li class="dropdown top-nav__guest">
+                        <a href="{{ url_for('user.profile',user_id=current_user.id) }} ">个人信息</a>
+                    </li>
+                    <li class="dropdown top-nav__guest">
+                        <a href="" target="view_window">我的关注</a>
+                    </li>
+                    <li class="dropdown top-nav__guest">
+                        <a href="" target="view_window">我的圈子</a>
+                    </li>
+
+                {% else %}
+                    <li class="dropdown top-nav__guest">
+                        <a data-toggle="dropdown" id="nav_register" href="" onclick="document.getElementById('register').style.display='block';">注册</a>
+                        <div class="dropdown-menu" style="width: 420px;">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="邮箱地址" id="email" name="email">
+                                <i class="form-group__bar"></i>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" placeholder="密码" id='password' name="password">
+                                <i class="form-group__bar"></i>
+                            </div>
+
+                            <div class="form-group">
+                                <input type="password" class="form-control" placeholder="确认密码" id="retype_password" name="retype_password">
+                                <i class="form-group__bar"></i>
+                            </div>
+                            <div class="form-group">
+                                <span>
+                                    <input type="text"  style="float:left;width:60%;" class="form-control" placeholder="请查收邮箱中的验证码。" id="check_code" name="check_code">
+                                    <button id="send" onclick="send(event)" style="float:left;"  class="btn btn-success">发送验证码</button>
+                                    <div style="clear:both"></div>
+                                </span>
+                                 <i class="form-group__bar"></i>
+                            </div>
+                            <p>
+                                <small>注册即表示您同意我们的条款和<a>条件</a>.</small>
+                            </p>
+                            <button type="button" id="register" onclick="register()" class="btn btn-primary btn-block m-t-10 m-b-10">注册账号</button>
+                            <div class="dropdown-menu" style="width: 400px" method="post" action="">
+                                <div class="top-nav__auth">
+                                    <span>or</span>
+                                    <div>使用第三方账号登录？</div>
+                                    <a href="" class="mdc-bg-blue-500">
+                                        <i class="zmdi zmdi-github"></i>
+                                    </a>
+                                    <a href="" class="mdc-bg-red-400">
+                                        <i class="zmdi zmdi-google"></i>
+                                    </a>
+                                </div>
+                             </div>
+                        </div>
+                    </li>
+                    <li class="dropdown top-nav__guest">
+                        <a data-toggle="dropdown" href="" data-rmd-action="switch-login">登录</a>
+
+                        <div class="dropdown-menu">
+                            <div class="tab-content">
+                                <div class="tab-pane active in fade" id="top-nav-login" method="post" action="">
+
+                                    <div class="form-group">
+                                        <input id="login_email" type="text" class="form-control" placeholder="Email Address" name="email">
+                                        <i class="form-group__bar"></i>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <input id="login_password" type="password" class="form-control" placeholder="Password" name="password">
+                                        <i class="form-group__bar"></i>
+                                    </div>
+
+                                    <button onclick="login(event)" class="btn btn-primary btn-block m-t-10 m-b-10">登录</button>
+
+                                    <div class="text-center">
+                                        <a href="top-nav-forgot-password" data-toggle="tab">
+                                            <small>哎呀，忘记密码了肿么办呢?</small>
+                                        </a>
+                                    </div>
+
+                                    <div class="top-nav__auth">
+                                        <span>or</span>
+
+                                        <div>使用第三方账号登录(暂未开通)？</div>
+
+                                        <a href="" class="mdc-bg-blue-500">
+                                            <i class="zmdi zmdi-github"></i>
+                                        </a>
+
+                                        <a href="" class="mdc-bg-red-400">
+                                            <i class="zmdi zmdi-google"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <form class="tab-pane fade forgot-password" id="top-nav-forgot-password" method="post" action="">
+                                    <a href="top-nav-login" class="top-nav__back" data-toggle="tab"></a>
+                                    <p>请输入你注册时的邮箱，我们稍后会发送重置密码的链接到你的邮箱。</p>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" placeholder="Emaill Address" name="email">
+                                        <i class="form-group__bar"></i>
+                                    </div>
+                                    <button class="btn btn-warning btn-block">重置密码</button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                {% endif %}
+                {% if not current_user.is_anonymous %}
+                    <li class="pull-right top-nav__icon">
+                        <a onclick="logout(event)" href="#" target="_blank">登出</a>
+                    </li>
+                {% endif %}
+                <li class="pull-right top-nav__icon">
+                    <a href="/rss.xml"><i class="zmdi zmdi-rss"></i></a>
+                </li>
+                <li class="pull-right top-nav__icon">
+                    <a href="//blog.ansheng.me" target="_blank"><i class="zmdi zmdi-github"></i></a>
+                </li>
+                <li class="pull-right top-nav__icon">
+                    <a href="" target="_blank"><i class="zmdi zmdi-language-python"></i></a>
+                </li>
+                <li class="pull-right top-nav__icon">
+                    <a href="mailto:ianshengme@gmail.com" target="_blank"><i class="zmdi zmdi-email"></i></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="header__main">
+        <div class="container">
+            <a class="logo" href="{{ url_for('main.index') }}">
+                <img src="{{ url_for('static',filename= 'blog/img/logo.png') }}" alt="这是Logo啦">
+                <div class="logo__text">
+                        <span>{{ current_user.nick_name }}</span>
+                        <span>{{ current_user.motto  }}</span>
+                </div>
+            </a>
+
+            <div class="navigation-trigger visible-xs visible-sm" data-rmd-action="block-open" data-rmd-target=".navigation">
+                <i class="zmdi zmdi-menu"></i>
+            </div>
+            <ul class="navigation">
+                <li class="visible-xs visible-sm"><a class="navigation__close" data-rmd-action="navigation-close" href=""><i class="zmdi zmdi-long-arrow-right"></i></a></li>
+                <li {% if request.path == '/' %} class="active"{% endif %}>
+                    <a href="">首页</a>
+                </li>
+                <li {% if request.path == '/about/' %} class="active"{% endif %}>
+                    <a href="">关于</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+<div id="register"  class="container" style="width:400px;margin:auto auto;position: fixed;display: none;z-index:999;background-color: white;border-radius: 10px;">
+
+</div>
+</header>
+
+<div class="action-header">
+    <div class="container">
+        <div class="action-header__item action-header__item--search">
+            <form method="get" action="">
+                <input type="text" class="hidden-sm hidden-xs" placeholder="在这里可以输入你要搜索的关键字~" name="search"><!-- For desktop -->
+                <input type="text" class="visible-xs visible-sm" placeholder="Search..." name="search_sm"><!-- For desktop -->
+                <input type="submit" style="display: none">
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block container %}
+        <aside class=" hidden-xs col-md-4 col-sm-5">
+            <div class="card subscribe">
+                <div class="subscribe__icon">
+                    <img src="{{ user_info.profile_img }}">
+                </div>
+            </div>
+
+
+            <div class="card">
+                <div class="card__header">
+                    <h2>分类</h2>
+                    {% if not categories %}
+                        <strong>Hello 暂时无分类~</strong>
+                    {% endif %}
+                </div>
+
+                <div class="card__body">
+                    {% for category in categories %}
+                        <a href="?category={{ category.name }}" style="float: left">
+                            <strong style="float: left">{{ category.name }}</strong><strong>({{ category.get_article_num() }})&nbsp; &nbsp;</strong>
+                        </a>
+                    {% endfor %}
+                     <br><br><br>
+                    <div class="p-10"></div>
+                </div>
+            </div>
+
+
+            <div class="card tags-list">
+                <div class="card__header">
+                    <h2>标签</h2>
+                    {% if not tags %}
+                        <small>Hello，tags！</small>
+                    {% endif %}
+                </div>
+                <div class="card__body">
+                    {% for tag in tags %}
+                        <label class="label label-primary" style="padding: 1px 3px;"> <a style="color:white" href="?tag={{ tag.name }}">{{ tag.name }}</a></label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__header">
+                    <h2>友情链接</h2>
+                    <small>如果要交换友链，请联系我~</small>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card__header">
+                    <h2>最近评论</h2>
+                </div>
+                <div class="list-group">
+                    <div class="p-10"></div>
+                </div>
+            </div>
+        </aside>
+{% endblock %}
+
+
+<footer id="footer">
+    <div class="container hidden-xs">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="footer__block">
+                    <a class="logo clearfix" href="">
+                        <div class="logo__text">
+                            <span>落云飘雪</span>
+                            <span>落云向下飘点雪~~</span>
+                        </div>
+                    </a>
+
+                    <address class="m-t-20 m-b-20 f-14">
+                        一个可爱的博客？
+                    </address>
+
+                    <div class="f-20">有多可爱呢？</div>
+                    <div class="f-14 m-t-5">嗯，，，多可爱？非常可爱呀。</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="footer__block footer__block--blog">
+                    <div class="footer__title">热门文章</div>
+                    {% for read in reads %}
+                        <a href="">
+                            {{ read.title }}
+                            <small>{{ read.created_time }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="footer__block">
+                    <div class="footer__title">Someone say that</div>
+                    <div>
+                        Genius is an infinite capacity of taking pains.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer__bottom">
+        <div class="container">
+            <span class="footer__copyright">Copyright @ 2016-2017 Sanagi 版权所有 </span>
+        </div>
+        <div class="footer__to-top" data-rmd-action="scroll-to" data-rmd-target="html">
+            <i class="zmdi zmdi-chevron-up"></i>
+        </div>
+    </div>
+{% if err_mess %}
+    <script>
+        alert({{ err_mess }})
+    </script>
+{% endif %}
+
+
+</footer>
+
+<!-- Older IE warning message -->
+<!--[if lt IE 9]>
+        <div class="ie-warning">
+            <h1>Warning!!</h1>
+            <p>You are using an outdated version of Internet Explorer, please upgrade <br/>to any of the following web browsers to access this website.</p>
+            <div class="ie-warning__inner">
+                <ul class="ie-warning__download">
+                    <li>
+                        <a href="http://www.google.com/chrome/">
+                            <img src="img/browsers/chrome.png" alt="">
+                            <div>Chrome</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.mozilla.org/en-US/firefox/new/">
+                            <img src="img/browsers/firefox.png" alt="">
+                            <div>Firefox</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="http://www.opera.com">
+                            <img src="img/browsers/opera.png" alt="">
+                            <div>Opera</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.apple.com/safari/">
+                            <img src="img/browsers/safari.png" alt="">
+                            <div>Safari</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">
+                            <img src="img/browsers/ie.png" alt="">
+                            <div>IE (New)</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <p>Sorry for the inconvenience!</p>
+        </div>
+        <![endif]-->
+{% block custom_js %}{% endblock %}
+    {{ moment.include_moment() }}
+    {{ moment.lang("zh-CN") }}
+   <script type="text/javascript">
+        var t='';
+        var s=3;
+        function check_email(email) {
+            re = new RegExp("[a-zA-Z0-9]+\@[a-zA-Z0-9]+\.[a-zA-Z]+");
+            return re.test(email)
+        }
+        function register(){
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+            var password_comfirm = document.getElementById('retype_password').value;
+            var check_code = document.getElementById('check_code').value;
+            if(check_email(email) && password.length >=3 && check_code.length==4){
+                if(password == password_comfirm){
+                    $.ajax({
+                        type:'POST',
+                        url:'/auth/register',
+                        data:JSON.stringify({
+                            opt:'register',
+                            email:email,
+                            password:password,
+                            check_code:check_code,
+                        }),
+                        success:function(r) {
+                            if (r.result == 1) {
+                                alert('账号注册成功,Enjoy it ! \n 落云飘雪~~');
+                            } else if (r.result == 2) {
+                                alert('账号已存在');
+                            } else if (r.result == 3) {
+                                alert('验证码错误 ！');
+                            } else if (r.result == 4) {
+                                alert('密码不符合要求\n' + r.info)
+                            } else if (r.result == 5){
+                                alert('邮箱不符合要求')
+                            } else{
+                                alert('注册失败！')
+                            }
+                        }
+                    })
+                }
+            }
+        }
+
+        function login(e){
+            e.stopPropagation()
+            var email = document.getElementById('login_email').value;
+            var password = document.getElementById('login_password').value;
+            if(email && password ){
+                $.ajax({
+                    type:'POST',
+                    url:'/auth/login',
+                    data:JSON.stringify({
+                        opt:'login',
+                        email:email,
+                        password:password,
+                    }),
+                    success:function(r){
+                        if(r.result){
+                            window.location.reload();
+                        }else{
+                            alert('登录失败，请检查你的账户密码是否输错。')
+                        }
+                    },
+                })
+            }else{
+                alert('账号密码不能为空 ！');
+            }
+        }
+        function logout(e){
+            e.stopPropagation();
+            e.preventDefault();
+             $.ajax({
+                    type: 'POST',
+                    url:'/auth/logout',
+                    data: {
+                        opt: 'logout',
+                    },
+                    success: function (r) {
+                        if(r.result){
+                            window.location.reload();
+                        }else{
+                            alert('发生错误，请检查本机网络。')
+                        }
+                    }
+            })
+        }
+        function tick(){
+             s--;
+            btn = document.getElementById('send')
+            btn.innerHTML='<b style="font-size:15px;">' + s +'</b>' +'  秒后再申请';
+            btn.disabled = true;
+            t = setTimeout('tick()',1000);
+            document.getElementById('nav_register').onclick();
+            if(s==0){
+                s=3;
+                btn.innerHTML='再次发送' ;
+                btn.disabled = false;
+                clearTimeout(t);
+            }
+        }
+        function send(ev){
+            ev.stopPropagation();
+            email=document.getElementById('email').value;
+            if(check_email(email)){  //判断是否符合正则，是则按钮计时，并发送数据
+                tick();
+                $.ajax({
+                    type: 'POST',
+                    url:'/auth/send_check_code',
+                    data: JSON.stringify({
+                        opt: 'request_email',
+                        email:email,
+                    }),
+                    success: function (r) {
+                        if (r.result) {
+                            alert('验证码邮件已发送至 ' + email + ' ...');
+                        } else {
+                            alert('请求失败，请检查你的网络...');
+                            btn.innerHTML='再次发送' ;
+                            btn.disabled = false;
+                            clearTimeout(t);
+                        }
+                    }
+                })
+            }else{
+                alert('邮箱格式错误...')
+            }
+        }
+    </script>
+</body>
+</html>
